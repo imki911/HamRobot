@@ -1,0 +1,78 @@
+audio:
+  sample_rate: 16000
+  channels: 1
+  dtype: int16
+  block_ms: 20
+  input_device: null
+  output_device: null
+  save_dir: runtime/recordings
+
+segmenter:
+  calibrate_seconds: 1.0
+  threshold_ratio: 3.0
+  min_threshold: 300
+  start_voice_ms: 300
+  end_silence_ms: 1000
+  min_record_ms: 500
+  max_record_seconds: 12
+  pre_roll_ms: 300
+
+asr:
+  engine: whisper
+  whisper_model: base
+  language: zh
+  http_url: ""
+  http_api_key_env: ASR_API_KEY
+  timeout_seconds: 60
+  dummy_text: "机器人，收到请回答"
+  min_confidence: 0.3
+
+llm:
+  provider: deepseek
+  base_url: "https://api.deepseek.com/v1"
+  api_key_env: DEEPSEEK_API_KEY
+  model: deepseek-chat
+  timeout_seconds: 60
+  temperature: 0.3
+  max_tokens: 120
+  system_prompt: "你是一个语音应答助手。回复必须简短、清楚，适合语音播报，不要使用Markdown、表格或代码块。"
+  dummy_reply: "收到，语音链路正常。"
+
+tts:
+  engine: pyttsx3
+  output_dir: runtime/tts
+  rate: 170
+  volume: 1.0
+  edge_voice: zh-CN-XiaoxiaoNeural
+  ffmpeg_path: ffmpeg
+  http_url: ""
+  http_api_key_env: TTS_API_KEY
+  timeout_seconds: 60
+  dummy_frequency_hz: 880
+  dummy_seconds: 1.2
+
+dialog:
+  require_wake_word: true
+  wake_words:
+    - "机器人"
+    - "小智"
+    - "调度台"
+  max_reply_chars: 80
+  tx_cooldown_seconds: 3
+  max_history_turns: 4
+
+radio:
+  mode: vox
+  ptt_port: null
+  ptt_baudrate: 9600
+  ptt_line: rts
+  ptt_active_high: true
+  ptt_pre_delay_ms: 250
+  ptt_post_delay_ms: 400
+  vox_head_silence_ms: 500
+  vox_tail_silence_ms: 800
+  max_tx_seconds: 25
+
+logging:
+  level: INFO
+  file: runtime/hamrobot.log
