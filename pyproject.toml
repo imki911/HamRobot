@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hamrobot"
+version = "0.1.0"
+description = "Half-duplex radio voice assistant for Audio2Rig/USB sound card interfaces"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "HamRobot"}]
+dependencies = [
+  "numpy>=1.24",
+  "sounddevice>=0.4.6",
+  "soundfile>=0.12.1",
+  "PyYAML>=6.0",
+  "requests>=2.31",
+  "pyserial>=3.5",
+  "pyttsx3>=2.90"
+]
+
+[project.optional-dependencies]
+whisper = ["openai-whisper>=20231117"]
+edge = ["edge-tts>=6.1.9"]
+dev = ["pytest>=7.4", "ruff>=0.4"]
+
+[project.scripts]
+hamrobot = "hamrobot.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["hamrobot*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
