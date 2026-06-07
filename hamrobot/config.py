@@ -46,6 +46,14 @@ class ASRConfig:
     dummy_text: str = "机器人，收到请回答"
     min_confidence: float = 0.3
 
+    # DashScope fun-asr-realtime local-file mode.
+    # The key is intentionally read from config as requested by the project owner.
+    dashscope_api_key: str = ""
+    dashscope_model: str = "fun-asr-realtime"
+    dashscope_format: str = "wav"
+    dashscope_sample_rate: int = 16000
+    dashscope_base_websocket_api_url: str = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"
+
 
 @dataclass
 class LLMConfig:

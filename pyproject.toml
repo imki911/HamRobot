@@ -16,7 +16,8 @@ dependencies = [
   "PyYAML>=6.0",
   "requests>=2.31",
   "pyserial>=3.5",
-  "pyttsx3>=2.90"
+  "pyttsx3>=2.90",
+  "dashscope>=1.20.0"
 ]
 
 [project.optional-dependencies]

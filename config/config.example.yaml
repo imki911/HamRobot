@@ -18,7 +18,7 @@ segmenter:
   pre_roll_ms: 300
 
 asr:
-  engine: whisper
+  engine: dashscope_realtime_file
   whisper_model: medium
   language: zh
   http_url: ""
@@ -26,6 +26,11 @@ asr:
   timeout_seconds: 60
   dummy_text: "机器人，收到请回答"
   min_confidence: 0.3
+  dashscope_api_key: "YOUR_DASHSCOPE_API_KEY"
+  dashscope_model: fun-asr-realtime
+  dashscope_format: wav
+  dashscope_sample_rate: 16000
+  dashscope_base_websocket_api_url: "wss://dashscope.aliyuncs.com/api-ws/v1/inference"
 
 llm:
   provider: deepseek
