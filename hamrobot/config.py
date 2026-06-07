@@ -56,17 +56,20 @@ class LLMConfig:
     timeout_seconds: int = 60
     temperature: float = 0.3
     max_tokens: int = 120
-    system_prompt: str = "你是一个语音应答助手。回复必须简短、清楚，适合语音播报。"
+    system_prompt: str = "你是一个HAM（业余无线电玩家），守听线上的呼叫并做出回应。针对收听到的呼叫，"
     dummy_reply: str = "收到，语音链路正常。"
 
 
 @dataclass
 class TTSConfig:
+    vox_prefix_ms: int = 500
     engine: str = "pyttsx3"
     output_dir: str = "runtime/tts"
     rate: int = 170
     volume: float = 1.0
     edge_voice: str = "zh-CN-XiaoxiaoNeural"
+    edge_rate: str = "-10%"
+    edge_volume: str = "+0%"
     ffmpeg_path: str = "ffmpeg"
     http_url: str = ""
     http_api_key_env: str = "TTS_API_KEY"

@@ -28,6 +28,9 @@ class WhisperASR(BaseASR):
         kwargs = {}
         if self.cfg.language:
             kwargs["language"] = self.cfg.language
+            kwargs["initial_prompt"] = (
+                "以下是业余无线电通联语音，可能包含中文、英文、数字、呼号、CQ、DE、OVER、Roger。"
+            )
         result = self.model.transcribe(str(wav_path), **kwargs)
         return ASRResult(
             text=str(result.get("text", "")).strip(),

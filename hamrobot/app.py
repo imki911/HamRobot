@@ -4,6 +4,7 @@ import logging
 import signal
 import threading
 from dataclasses import dataclass
+from opencc import OpenCC
 
 from hamrobot.asr.engines import build_asr
 from hamrobot.audio.segmenter import EnergySegmenter
@@ -55,7 +56,9 @@ class HamRobotApp:
                 if result.confidence < self.cfg.asr.min_confidence:
                     logger.info("ASR confidence too low")
                     continue
-                decision = self.dialog.decide(result.text)
+                cc = OpenCC("t2s")  # Traditional to Simplified
+                text = cc.convert(result.text)
+                decision = self.dialog.decide(text)
                 if not decision.should_reply:
                     logger.info("dialog skipped reason=%s text=%s", decision.reason, decision.normalized_text)
                     continue

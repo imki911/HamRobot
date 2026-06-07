@@ -13,7 +13,6 @@ from hamrobot.config import TTSConfig
 from hamrobot.tts.base import BaseTTS
 from hamrobot.utils.audio import tone, write_wav
 
-
 class DummyTTS(BaseTTS):
     def __init__(self, cfg: TTSConfig, sample_rate: int):
         self.cfg = cfg
@@ -64,8 +63,13 @@ class EdgeTTS(BaseTTS):
     async def _run_edge(self, text: str, mp3_path: Path) -> None:
         import edge_tts
 
-        communicate = edge_tts.Communicate(text, self.cfg.edge_voice)
-        await communicate.save(str(mp3_path))
+        communicate = edge_tts.Communicate(
+            text=text,
+            voice=self.cfg.edge_voice,
+            rate=self.cfg.edge_rate,
+            volume=self.cfg.edge_volume,
+        )
+        await communicate.save(str(mp3_path),)
 
 
 class HttpTTS(BaseTTS):

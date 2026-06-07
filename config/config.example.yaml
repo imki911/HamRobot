@@ -3,8 +3,8 @@ audio:
   channels: 1
   dtype: int16
   block_ms: 20
-  input_device: null
-  output_device: null
+  input_device: 1
+  output_device: 4
   save_dir: runtime/recordings
 
 segmenter:
@@ -19,7 +19,7 @@ segmenter:
 
 asr:
   engine: whisper
-  whisper_model: base
+  whisper_model: medium
   language: zh
   http_url: ""
   http_api_key_env: ASR_API_KEY
@@ -29,21 +29,42 @@ asr:
 
 llm:
   provider: deepseek
-  base_url: "https://api.deepseek.com/v1"
-  api_key_env: DEEPSEEK_API_KEY
-  model: deepseek-chat
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  api_key_env: "" #your api key
+  model: deepseek-v4-pro
   timeout_seconds: 60
   temperature: 0.3
   max_tokens: 120
-  system_prompt: "你是一个语音应答助手。回复必须简短、清楚，适合语音播报，不要使用Markdown、表格或代码块。"
-  dummy_reply: "收到，语音链路正常。"
+  system_prompt: "你是一个HAM（业余无线电玩家）你的呼号是xxx，QTH在xxx。你需要守听线上的呼叫并做出回应。请根据以下规则生成应答文字：
+1. 简短明了，每次应答不要超过30个中文字符。
+2. 呼号规范：
+   - 如果识别到对方呼号，开头或结尾必须报出对方呼号。
+   - 你的呼号必须出现在结尾。
+   - 使用“DE”分隔呼号，例如：BG7XXX DE TEST01。
+3. 礼貌用语：可加入“你好”“收到”“OVER”等。
+4. 使用简体中文。
+5. 不泄露个人信息。
+6. 场景理解：
+   - “CQ CQ CQ” → 群呼，应答需包含你的呼号。
+   - 明确呼叫你的呼号 → 针对呼叫者应答。
+7. 示例：
+   输入: “CQ CQ CQ BG7XXX”
+   输出: “BG7XXX DE CQ CQ CQ，BG7XXX。OVER.”
+   输入: “TEST01 DE BG7XXX”
+   输出: “TEST01 DE BG7XXX，你好，BG7XXX。OVER.”
+
+只输出应答文本。"
+  dummy_reply: "收到，语音链路正常，over。"
 
 tts:
-  engine: pyttsx3
+  vox_prefix_ms: 500
+  engine: edge #pyttsx3
   output_dir: runtime/tts
-  rate: 170
+  rate: 150
   volume: 1.0
   edge_voice: zh-CN-XiaoxiaoNeural
+  edge_rate: "-10%"
+  edge_volume: "+0%"
   ffmpeg_path: ffmpeg
   http_url: ""
   http_api_key_env: TTS_API_KEY
@@ -55,8 +76,8 @@ dialog:
   require_wake_word: true
   wake_words:
     - "机器人"
-    - "小智"
-    - "调度台"
+    - "是否有人"
+    - "CQ"
   max_reply_chars: 80
   tx_cooldown_seconds: 3
   max_history_turns: 4
@@ -69,8 +90,8 @@ radio:
   ptt_active_high: true
   ptt_pre_delay_ms: 250
   ptt_post_delay_ms: 400
-  vox_head_silence_ms: 500
-  vox_tail_silence_ms: 800
+  vox_head_silence_ms: 900
+  vox_tail_silence_ms: 300
   max_tx_seconds: 25
 
 logging:
