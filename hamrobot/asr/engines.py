@@ -72,23 +72,21 @@ class HttpASR(BaseASR):
 
 
 class DashScopeRealtimeFileASR(BaseASR):
-    """DashScope fun-asr-realtime wrapper that accepts a local wav file path.
-
-    This uses the official dashscope SDK Recognition.call(local_file) style. It keeps
-    HamRobot's current batch-ASR state machine unchanged while replacing slow local
-    Whisper inference with a remote realtime model call.
-    """
+    """DashScope fun-asr-realtime wrapper that accepts a local wav file path."""
 
     def __init__(self, cfg: ASRConfig):
         import dashscope
-        from dashscope.audio.asr import Recognition
+        from dashscope.audio.asr import Recognition, VocabularyService
 
         self.cfg = cfg
         self.Recognition = Recognition
+        self.VocabularyService = VocabularyService
         api_key = (cfg.dashscope_api_key or "").strip()
         if not api_key or api_key == "YOUR_DASHSCOPE_API_KEY":
             raise RuntimeError("asr.dashscope_api_key is required for dashscope_realtime_file")
         dashscope.api_key = api_key
+        if cfg.dashscope_base_http_api_url:
+            dashscope.base_http_api_url = cfg.dashscope_base_http_api_url
         if cfg.dashscope_base_websocket_api_url:
             dashscope.base_websocket_api_url = cfg.dashscope_base_websocket_api_url
 
@@ -97,20 +95,72 @@ class DashScopeRealtimeFileASR(BaseASR):
         if not wav_path.exists():
             raise FileNotFoundError(wav_path)
 
-        recognition = self.Recognition(
-            model=self.cfg.dashscope_model,
-            format=self.cfg.dashscope_format,
-            sample_rate=self.cfg.dashscope_sample_rate,
-            callback=None,
-        )
-        result = recognition.call(str(wav_path))
-        if result.status_code != HTTPStatus.OK:
-            message = getattr(result, "message", "") or str(result)
-            raise RuntimeError(f"DashScope ASR failed: {message}")
+        service = None
+        vocabulary_id: str | None = None
+        try:
+            if self.cfg.dashscope_vocabulary_enabled and self.cfg.dashscope_vocabulary:
+                service = self.VocabularyService()
+                vocabulary_id = self._create_vocabulary(service)
 
-        text = self._extract_sentence(result)
-        self._log_metrics(recognition)
-        return ASRResult(text=text, confidence=1.0, language=self.cfg.language)
+            kwargs: dict[str, Any] = {
+                "model": self.cfg.dashscope_model,
+                "format": self.cfg.dashscope_format,
+                "sample_rate": self.cfg.dashscope_sample_rate,
+                "callback": None,
+            }
+            if vocabulary_id:
+                kwargs["vocabulary_id"] = vocabulary_id
+
+            recognition = self.Recognition(**kwargs)
+            result = recognition.call(str(wav_path))
+            if result.status_code != HTTPStatus.OK:
+                message = getattr(result, "message", "") or str(result)
+                raise RuntimeError(f"DashScope ASR failed: {message}")
+
+            text = self._extract_sentence(result)
+            self._log_metrics(recognition)
+            return ASRResult(text=text, confidence=1.0, language=self.cfg.language)
+        finally:
+            if service is not None and vocabulary_id and self.cfg.dashscope_vocabulary_delete_after_call:
+                self._delete_vocabulary(service, vocabulary_id)
+
+    def _create_vocabulary(self, service: Any) -> str | None:
+        vocabulary = self._sanitize_vocabulary(self.cfg.dashscope_vocabulary)
+        if not vocabulary:
+            return None
+        vocabulary_id = service.create_vocabulary(
+            prefix=self.cfg.dashscope_vocabulary_prefix,
+            target_model=self.cfg.dashscope_model,
+            vocabulary=vocabulary,
+        )
+        status = service.query_vocabulary(vocabulary_id)
+        if isinstance(status, dict) and status.get("status") != "OK":
+            logger.warning("DashScope vocabulary status is not OK: %s", status)
+        logger.info("created DashScope vocabulary_id=%s words=%d", vocabulary_id, len(vocabulary))
+        return str(vocabulary_id)
+
+    @staticmethod
+    def _sanitize_vocabulary(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        vocabulary: list[dict[str, Any]] = []
+        for item in items:
+            text = str(item.get("text", "")).strip()
+            if not text:
+                continue
+            try:
+                weight = int(item.get("weight", 4))
+            except (TypeError, ValueError):
+                weight = 4
+            weight = max(1, min(5, weight))
+            vocabulary.append({"text": text, "weight": weight})
+        return vocabulary
+
+    @staticmethod
+    def _delete_vocabulary(service: Any, vocabulary_id: str) -> None:
+        try:
+            service.delete_vocabulary(vocabulary_id)
+            logger.info("deleted DashScope vocabulary_id=%s", vocabulary_id)
+        except Exception:
+            logger.warning("failed to delete DashScope vocabulary_id=%s", vocabulary_id, exc_info=True)
 
     @staticmethod
     def _extract_sentence(result: Any) -> str:

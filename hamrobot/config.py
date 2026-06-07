@@ -52,7 +52,31 @@ class ASRConfig:
     dashscope_model: str = "fun-asr-realtime"
     dashscope_format: str = "wav"
     dashscope_sample_rate: int = 16000
+    dashscope_base_http_api_url: str = "https://dashscope.aliyuncs.com/api/v1"
     dashscope_base_websocket_api_url: str = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"
+
+    # DashScope hotword vocabulary. Each item is like {"text": "BH4HZU", "weight": 4}.
+    # Weight usually ranges from 1 to 5. Higher values bias recognition more strongly.
+    dashscope_vocabulary_enabled: bool = True
+    dashscope_vocabulary_prefix: str = "hamrobot"
+    dashscope_vocabulary_delete_after_call: bool = True
+    dashscope_vocabulary: list[dict[str, Any]] = field(
+        default_factory=lambda: [
+            {"text": "BH4HZU", "weight": 5},
+            {"text": "CQ", "weight": 4},
+            {"text": "DE", "weight": 4},
+            {"text": "QTH", "weight": 4},
+            {"text": "QSL", "weight": 4},
+            {"text": "QRZ", "weight": 4},
+            {"text": "OVER", "weight": 4},
+            {"text": "ROGER", "weight": 4},
+            {"text": "73", "weight": 3},
+            {"text": "昆山", "weight": 3},
+            {"text": "周庄", "weight": 3},
+            {"text": "泉盛", "weight": 3},
+            {"text": "晾衣杆天线", "weight": 3},
+        ]
+    )
 
 
 @dataclass

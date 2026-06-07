@@ -30,7 +30,25 @@ asr:
   dashscope_model: fun-asr-realtime
   dashscope_format: wav
   dashscope_sample_rate: 16000
+  dashscope_base_http_api_url: "https://dashscope.aliyuncs.com/api/v1"
   dashscope_base_websocket_api_url: "wss://dashscope.aliyuncs.com/api-ws/v1/inference"
+  dashscope_vocabulary_enabled: true
+  dashscope_vocabulary_prefix: hamrobot
+  dashscope_vocabulary_delete_after_call: true
+  dashscope_vocabulary:
+    - { text: "BH4HZU", weight: 5 }
+    - { text: "CQ", weight: 4 }
+    - { text: "DE", weight: 4 }
+    - { text: "QTH", weight: 4 }
+    - { text: "QSL", weight: 4 }
+    - { text: "QRZ", weight: 4 }
+    - { text: "OVER", weight: 4 }
+    - { text: "ROGER", weight: 4 }
+    - { text: "73", weight: 3 }
+    - { text: "昆山", weight: 3 }
+    - { text: "周庄", weight: 3 }
+    - { text: "泉盛", weight: 3 }
+    - { text: "晾衣杆天线", weight: 3 }
 
 llm:
   provider: deepseek
