@@ -11,7 +11,7 @@ segmenter:
   calibrate_seconds: 1.0
   threshold_ratio: 3.0
   min_threshold: 300
-  start_voice_ms: 300
+  start_voice_ms: 120
   end_silence_ms: 1000
   min_record_ms: 500
   max_record_seconds: 12
@@ -36,7 +36,6 @@ asr:
   dashscope_vocabulary_prefix: hamrobot
   dashscope_vocabulary_delete_after_call: true
   dashscope_vocabulary:
-    - { text: "BH4HZU", weight: 5 }
     - { text: "CQ", weight: 4 }
     - { text: "DE", weight: 4 }
     - { text: "QTH", weight: 4 }
@@ -48,7 +47,6 @@ asr:
     - { text: "昆山", weight: 3 }
     - { text: "周庄", weight: 3 }
     - { text: "泉盛", weight: 3 }
-    - { text: "晾衣杆天线", weight: 3 }
 
 llm:
   provider: deepseek

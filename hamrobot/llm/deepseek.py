@@ -34,7 +34,7 @@ class DeepSeekLLM(BaseLLM):
             messages.extend({"role": t.role, "content": t.content} for t in history)
         messages.append({"role": "user", "content": user_text})
         completion = self.client.chat.completions.create(
-            model="deepseek-v4-pro",
+            model=self.cfg.model,
             messages=messages,
             # 通过 extra_body 设置 enable_thinking 开启思考模式
             extra_body={"enable_thinking": False},
