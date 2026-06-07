@@ -43,36 +43,59 @@ class HamRobotApp:
 
     def run(self) -> None:
         logger.info("HamRobot started")
-        self.segmenter.calibrate()
-        while not self.stop_event.is_set():
-            if self.radio.tx_active:
-                continue
-            try:
-                segment = self.segmenter.wait_for_segment()
-                if segment is None or segment.wav_path is None:
+        try:
+            self.segmenter.calibrate()
+            cc = OpenCC("t2s")  # Traditional to Simplified
+
+            while not self.stop_event.is_set():
+                if self.radio.tx_active:
+                    self.stop_event.wait(0.02)
                     continue
-                result = self.asr.transcribe(segment.wav_path)
-                logger.info("ASR text=%s confidence=%.2f", result.text, result.confidence)
-                if result.confidence < self.cfg.asr.min_confidence:
-                    logger.info("ASR confidence too low")
-                    continue
-                cc = OpenCC("t2s")  # Traditional to Simplified
-                text = cc.convert(result.text)
-                decision = self.dialog.decide(text)
-                if not decision.should_reply:
-                    logger.info("dialog skipped reason=%s text=%s", decision.reason, decision.normalized_text)
-                    continue
-                reply = self.llm.chat(decision.normalized_text, self.dialog.history)
-                reply = self.dialog.trim_reply(reply)
-                if not reply:
-                    logger.info("empty LLM reply")
-                    continue
-                logger.info("reply=%s", reply)
-                wav_path = self.tts.synthesize(reply)
-                self.radio.transmit_wav(wav_path)
-                self.dialog.mark_tx()
-                self.dialog.add_turn(decision.normalized_text, reply)
-            except Exception:
-                logger.exception("main loop error")
-        self.radio.close()
-        logger.info("HamRobot stopped")
+
+                try:
+                    segment = self.segmenter.wait_for_segment(self.stop_event)
+                    if self.stop_event.is_set():
+                        break
+                    if segment is None or segment.wav_path is None:
+                        continue
+
+                    result = self.asr.transcribe(segment.wav_path)
+                    logger.info("ASR text=%s confidence=%.2f", result.text, result.confidence)
+                    if self.stop_event.is_set():
+                        break
+                    if result.confidence < self.cfg.asr.min_confidence:
+                        logger.info("ASR confidence too low")
+                        continue
+
+                    text = cc.convert(result.text)
+                    decision = self.dialog.decide(text)
+                    if not decision.should_reply:
+                        logger.info(
+                            "dialog skipped reason=%s text=%s",
+                            decision.reason,
+                            decision.normalized_text,
+                        )
+                        continue
+
+                    reply = self.llm.chat(decision.normalized_text, self.dialog.history)
+                    if self.stop_event.is_set():
+                        break
+                    reply = self.dialog.trim_reply(reply)
+                    if not reply:
+                        logger.info("empty LLM reply")
+                        continue
+
+                    logger.info("reply=%s", reply)
+                    wav_path = self.tts.synthesize(reply)
+                    if self.stop_event.is_set():
+                        break
+                    self.radio.transmit_wav(wav_path)
+                    self.dialog.mark_tx()
+                    self.dialog.add_turn(decision.normalized_text, reply)
+                except Exception:
+                    if self.stop_event.is_set():
+                        break
+                    logger.exception("main loop error")
+        finally:
+            self.radio.close()
+            logger.info("HamRobot stopped")

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from collections import deque
 from dataclasses import dataclass
@@ -62,7 +63,7 @@ class EnergySegmenter:
         self.threshold = max(float(self.seg_cfg.min_threshold), noise * float(self.seg_cfg.threshold_ratio))
         logger.info("calibrated noise_rms=%.1f threshold=%.1f", noise, self.threshold)
 
-    def wait_for_segment(self) -> AudioSegment | None:
+    def wait_for_segment(self, stop_event: threading.Event | None = None) -> AudioSegment | None:
         start_frames = max(1, int(self.seg_cfg.start_voice_ms / self.audio_cfg.block_ms))
         silence_frames = max(1, int(self.seg_cfg.end_silence_ms / self.audio_cfg.block_ms))
         min_frames = max(1, int(self.seg_cfg.min_record_ms / self.audio_cfg.block_ms))
@@ -84,7 +85,16 @@ class EnergySegmenter:
             device=self.input_device,
         ) as stream:
             while True:
+                if stop_event is not None and stop_event.is_set():
+                    logger.info("segment wait stopped")
+                    return None
+
                 frame = self._read_block(stream)
+
+                if stop_event is not None and stop_event.is_set():
+                    logger.info("segment wait stopped after read")
+                    return None
+
                 value = rms_int16(frame)
                 peak_rms = max(peak_rms, value)
                 is_voice = value >= self.threshold
